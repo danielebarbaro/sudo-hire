@@ -602,3 +602,14 @@ Add entries in date order. Do not delete entries: mark them passed or failed, wi
   4. Open the link of one Workable job, then its apply link.
 - Expected: after step 3, the company "Laravel" shows a green dot and the time of the read, and the unknown company shows "No answer" (the stored error is HTTP 404). The list shows the Workable jobs that match the filters, with "via Laravel careers". Each link opens the job at `apply.workable.com`.
 - Result: passed 2026-11-23, on branch feat/workable-reader with `composer native:dev`: "Laravel" showed a green dot at 18:35 (7 jobs read), and the unknown company showed "No answer", with the error HTTP 404. With the country Italy, no Laravel job was in the list, because no job lists IT in `locations`. The eligibility rule for jobs with several countries changes after this check, so the list needs a new check then. The apply link of "Senior Site Reliability Engineer" opened the application form at `apply.workable.com/laravel/j/6C1E9F512C/apply`, with the job overview in the same page. Before the app run, the reader read `workable:laravel` with live data from the command line: 7 jobs, 0 skipped.
+
+## Post-v1: Workable jobs with several countries show in the list
+
+- Added: 2026-11-24, branch fix/workable-eligibility
+- Why manual: only the app shows the list and its "Location not stated" group.
+- Setup: the branch checked out on a Mac, `composer setup`, then `composer native:dev`. The country in Settings is Italy, and unknown eligibility is grouped (the default).
+- Steps:
+  1. Open Settings, Companies. Add the Workable companies `laravel` and `hospitable`.
+  2. Start a scan and open the list.
+- Expected: jobs that list several countries, for example "Product Engineer (Laravel - Remote)" of Hospitable, show in "Location not stated" when they match the keywords. A job with a region of Italy in its title, for example "Account Executive - EMEA", shows in the main list. A job with another region in its title, for example "Technical Support Engineer (APAC)", does not show.
+- Result: not run in the app. On 2026-11-24, on a Mac, the reader read both companies with live data from the command line. With the country Italy, 2 of the 13 remote jobs pass, 7 have unknown eligibility and 4 fail. Before the change, all 13 failed. The 43 remote jobs of `payabl`, each with one country, stay restricted to that country.

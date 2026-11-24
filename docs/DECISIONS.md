@@ -1246,7 +1246,8 @@ Not used: `state` (company headquarters), `media:content`.
 - Milestone: post-v1
 - Decision: the ATS reader has a fifth reader, for Workable. An entry is `workable:<slug>`, where the slug is the account subdomain. The reader makes one request for each company, to `https://www.workable.com/api/accounts/<slug>?details=true`. The job schema and the `JobSource` interface are unchanged.
 - Decision: the endpoint answers with a redirect to `https://apply.workable.com/api/v1/widget/accounts/<slug>`. The reader uses the documented address and follows the redirect. An unknown slug gives HTTP 404.
-- Decision: `telecommuting` true gives `remote`. False gives `unknown`, because the response does not tell hybrid from on-site. Only a remote job gets an eligibility: the `countryCode` of each entry in `locations`. With no entry, the reader uses the `country` name.
+- Decision: `telecommuting` true gives `remote`. False gives `unknown`, because the response does not tell hybrid from on-site. Only a remote job gets an eligibility, from the `countryCode` of the entries in `locations`. One country gives a job restricted to that country. Several countries give `unknown`, and the title can narrow it, for example to "APAC". With no entry, the reader uses the `country` name.
+- Reason for the eligibility rule: approved by Alberto (2026-11-23). Of 216 remote jobs in 10 companies, 201 list one country, and those lists are correct: a company posts the same job one time for each country (`workmotion` has "Account Executive DACH" for ES, AL, PT, HR, PL and DE). A list with several countries can be narrower than the job text. The "Product Engineer (Laravel - Remote)" job of `hospitable` lists US, DE, NL and GB, but its text says "We hire based on timezones, not countries". The "Senior Site Reliability Engineer" job of `laravel` lists AR, BR, GB, PT and DK, but its text says "Remote, between Central Europe and US East timezones". With the country Italy, the first rule showed 0 of the 13 jobs of these two companies.
 - Decision: the response has no salary field and no level field that maps to the seniority values. `salary` is `null`, and the seniority comes from the title.
 - Reason: Workable hosts the career pages of companies with Laravel jobs. The fixture is the career page of Laravel, read on 2026-11-23.
 - Replaces: none
@@ -1263,7 +1264,7 @@ Not used: `state` (company headquarters), `media:content`.
 | `description` | `description` | HTML to plain text |
 | `department`, `function` | `tags` | |
 | `telecommuting` | `work_mode` | `true` gives `remote`, else `unknown` |
-| `locations[].countryCode` | `eligibility` | ISO alpha-2, for remote jobs only. Without a list, the `country` name |
+| `locations[].countryCode` | `eligibility` | ISO alpha-2, for remote jobs only. One country gives `restricted` to it. Several countries give `unknown`, then the title parser. Without a list, the `country` name |
 | `city`, `state`, `country` | `office_location` | joined with commas, for jobs that are not remote |
 | `employment_type` | `contract_type` | "Full-time" gives `full_time`, "Part-time" `part_time`, "Contract" `contract`, other or empty `unknown`, then the title parser |
 | `published_on` | `posted_at` | a date with no time: midnight UTC |

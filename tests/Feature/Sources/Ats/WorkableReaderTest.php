@@ -42,7 +42,7 @@ it('normalises a remote job field by field', function () {
         'company' => 'Laravel',
         'tags' => ['engineering'],
         'workMode' => 'remote',
-        'eligibility' => ['type' => 'restricted', 'regions' => [], 'countries' => ['AR', 'BR', 'GB', 'PT', 'DK']],
+        'eligibility' => ['type' => 'unknown', 'regions' => [], 'countries' => []],
         'officeLocation' => null,
         'timezoneMin' => null,
         'timezoneMax' => null,
@@ -56,25 +56,35 @@ it('normalises a remote job field by field', function () {
     ]);
 });
 
-it('reads the countries, the contract type and the title of each job', function (int $index, array $fields) {
+it('reads the eligibility, the contract type and the title of each job', function (int $index, array $fields) {
     $job = (new WorkableReader)->normalise(new AtsItem($this->company, workableItem($index), $this->fetchedAt));
 
     expect(JobFields::parsed($job))->toBe(JobFields::expected($fields));
 })->with([
-    'no employment type and no level' => [0, [
+    'several countries, no employment type and no level' => [0, [
         'workMode' => 'remote',
-        'eligibility' => JobFields::restricted(['GB', 'DK', 'ES', 'US']),
     ]],
-    'full-time, senior' => [1, [
+    'several countries, full-time, senior' => [1, [
         'workMode' => 'remote',
-        'eligibility' => JobFields::restricted(['AR', 'BR', 'GB', 'PT', 'DK']),
         'contractType' => 'full_time',
         'seniority' => 'senior',
     ]],
-    'a region in the title keeps the listed countries' => [2, [
+    'several countries and a region in the title' => [2, [
         'workMode' => 'remote',
-        'eligibility' => JobFields::restricted(['AU', 'JP', 'SG', 'ID', 'TH']),
+        'eligibility' => JobFields::restricted([], ['apac']),
         'contractType' => 'full_time',
+    ]],
+]);
+
+it('restricts a remote job to its country when the list has one country', function (array $locations) {
+    $job = (new WorkableReader)->normalise(new AtsItem($this->company, workableItem(1, ['locations' => $locations]), $this->fetchedAt));
+
+    expect(JobFields::of($job)['eligibility'])->toBe(JobFields::restricted(['PT']));
+})->with([
+    'one entry' => [[['country' => 'Portugal', 'countryCode' => 'PT', 'city' => '', 'region' => null, 'hidden' => false]]],
+    'two cities in one country' => [[
+        ['country' => 'Portugal', 'countryCode' => 'PT', 'city' => 'Lisbon', 'region' => null, 'hidden' => false],
+        ['country' => 'Portugal', 'countryCode' => 'PT', 'city' => 'Porto', 'region' => null, 'hidden' => false],
     ]],
 ]);
 
